@@ -41,10 +41,10 @@ export default function DashboardLayout({
         <Sidebar />
         
         {/* Main content */}
-        <div className="ml-60">
+        <div className="ml-52">
           {/* Top bar */}
           <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-            <div className="h-full px-6 flex items-center justify-between">
+            <div className="h-full px-4 flex items-center justify-between">
               <div>
                 <p className="text-foreground text-sm">
                   <span className="text-foreground/60">{greeting}, </span>
@@ -97,7 +97,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Page content */}
-          <main className="p-6">{children}</main>
+          <main className="p-4">{children}</main>
         </div>
       </div>
   )
