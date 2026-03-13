@@ -139,6 +139,34 @@ export function ScrollProgressBar({ className = "" }: { className?: string }) {
   )
 }
 
+// Single parallax layer component to properly use hooks
+function ParallaxLayer({ 
+  index, 
+  scrollYProgress 
+}: { 
+  index: number
+  scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"]
+}) {
+  const speed = 0.1 * (index + 1)
+  const y = useTransform(scrollYProgress, [0, 1], [0, 100 * speed])
+  const opacity = 0.1 - (index * 0.02)
+  
+  return (
+    <motion.div
+      className="absolute inset-0 pointer-events-none"
+      style={{ y }}
+    >
+      <div 
+        className="w-full h-full"
+        style={{
+          background: `radial-gradient(circle at ${30 + index * 20}% ${40 + index * 10}%, var(--foreground) 0%, transparent 50%)`,
+          opacity,
+        }}
+      />
+    </motion.div>
+  )
+}
+
 // Background parallax for hero sections
 interface ParallaxBackgroundProps {
   children?: ReactNode
@@ -158,30 +186,15 @@ export function ParallaxBackground({
     offset: ["start start", "end start"],
   })
   
+  // Create a fixed array for consistent hook calls
+  const layerIndices = [0, 1, 2]
+  
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
       {/* Parallax layers */}
-      {Array.from({ length: layers }).map((_, i) => {
-        const speed = 0.1 * (i + 1)
-        const y = useTransform(scrollYProgress, [0, 1], [0, 100 * speed])
-        const opacity = 0.1 - (i * 0.02)
-        
-        return (
-          <motion.div
-            key={i}
-            className="absolute inset-0 pointer-events-none"
-            style={{ y }}
-          >
-            <div 
-              className="w-full h-full"
-              style={{
-                background: `radial-gradient(circle at ${30 + i * 20}% ${40 + i * 10}%, var(--foreground) 0%, transparent 50%)`,
-                opacity,
-              }}
-            />
-          </motion.div>
-        )
-      })}
+      {layerIndices.slice(0, layers).map((i) => (
+        <ParallaxLayer key={i} index={i} scrollYProgress={scrollYProgress} />
+      ))}
       
       {/* Content */}
       <div className="relative z-10">
