@@ -27,13 +27,18 @@ export function CoordinationSection() {
       // If already played, show everything immediately
       setAnimationComplete(true)
       const flowItems = flowRef.current?.querySelectorAll(".flow-item")
-      const arrows = flowRef.current?.querySelectorAll(".flow-arrow")
-      const connectorLines = flowRef.current?.querySelectorAll(".connector-line")
+      const connectorWrappers = flowRef.current?.querySelectorAll(".connector-wrapper")
+      const lightDots = flowRef.current?.querySelectorAll(".light-dot")
       const stepCards = stepsRef.current?.querySelectorAll(".step-card")
+      const iconContainers = flowRef.current?.querySelectorAll(".icon-container")
       
       flowItems?.forEach(item => gsap.set(item, { opacity: 1, scale: 1 }))
-      arrows?.forEach(arrow => gsap.set(arrow, { opacity: 1 }))
-      connectorLines?.forEach(line => gsap.set(line, { scaleX: 1 }))
+      iconContainers?.forEach(icon => gsap.set(icon, { boxShadow: "none" }))
+      connectorWrappers?.forEach(wrapper => {
+        const line = wrapper.querySelector(".connector-line")
+        if (line) gsap.set(line, { scaleX: 1 })
+      })
+      lightDots?.forEach(dot => gsap.set(dot, { opacity: 0 }))
       stepCards?.forEach(card => gsap.set(card, { opacity: 1, y: 0 }))
       gsap.set(headerRef.current, { opacity: 1, y: 0 })
       return
@@ -59,10 +64,10 @@ export function CoordinationSection() {
 
       // Sequential flow animation
       const flowItems = flowRef.current?.querySelectorAll(".flow-item")
-      const connectorLines = flowRef.current?.querySelectorAll(".connector-line")
+      const connectorWrappers = flowRef.current?.querySelectorAll(".connector-wrapper")
       const stepCards = stepsRef.current?.querySelectorAll(".step-card")
       
-      if (flowItems && connectorLines) {
+      if (flowItems && connectorWrappers) {
         // Create main timeline
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -77,48 +82,97 @@ export function CoordinationSection() {
         })
 
         // Set initial state
-        gsap.set(flowItems, { opacity: 0.3, scale: 0.85 })
-        gsap.set(connectorLines, { scaleX: 0, transformOrigin: "left center" })
+        gsap.set(flowItems, { opacity: 0.2, scale: 0.85 })
+        connectorWrappers.forEach(wrapper => {
+          const line = wrapper.querySelector(".connector-line")
+          const dot = wrapper.querySelector(".light-dot")
+          if (line) gsap.set(line, { scaleX: 0, transformOrigin: "left center" })
+          if (dot) gsap.set(dot, { left: "0%", opacity: 0 })
+        })
         gsap.set(stepCards, { opacity: 0, y: 30 })
 
         // Animate each flow item sequentially
         flowItems.forEach((item, index) => {
-          // Zoom in current item
+          const iconContainer = item.querySelector(".icon-container")
+          
+          // Zoom in current item with glow
           tl.to(item, {
             opacity: 1,
-            scale: 1.15,
-            duration: 0.4,
+            scale: 1.2,
+            duration: 0.5,
             ease: "power2.out",
           })
           
-          // Add a slight hold
-          tl.to({}, { duration: 0.2 })
+          // Add glow to icon
+          if (iconContainer) {
+            tl.to(iconContainer, {
+              boxShadow: "0 0 20px 5px hsl(var(--foreground) / 0.3)",
+              duration: 0.3,
+              ease: "power2.out",
+            }, "<")
+          }
           
-          // Scale back to normal
+          // Hold briefly
+          tl.to({}, { duration: 0.3 })
+          
+          // Scale back to normal and remove glow
           tl.to(item, {
             scale: 1,
-            duration: 0.2,
+            duration: 0.3,
             ease: "power2.inOut",
           })
-
-          // Animate connector line to next item (if not last item)
-          if (index < flowItems.length - 1 && connectorLines[index]) {
-            tl.to(connectorLines[index], {
-              scaleX: 1,
+          
+          if (iconContainer) {
+            tl.to(iconContainer, {
+              boxShadow: "0 0 0px 0px hsl(var(--foreground) / 0)",
               duration: 0.3,
               ease: "power2.inOut",
-            }, "-=0.1")
+            }, "<")
+          }
+
+          // Animate light traveling to next item (if not last item)
+          if (index < flowItems.length - 1 && connectorWrappers[index]) {
+            const wrapper = connectorWrappers[index]
+            const line = wrapper.querySelector(".connector-line")
+            const dot = wrapper.querySelector(".light-dot")
+            
+            // Show and animate the light dot traveling
+            if (dot) {
+              tl.set(dot, { opacity: 1, left: "0%" })
+              tl.to(dot, {
+                left: "100%",
+                duration: 0.4,
+                ease: "power1.inOut",
+              })
+            }
+            
+            // Animate the line filling in behind the dot
+            if (line) {
+              tl.to(line, {
+                scaleX: 1,
+                duration: 0.4,
+                ease: "power1.inOut",
+              }, "<")
+            }
+            
+            // Fade out the dot at the end
+            if (dot) {
+              tl.to(dot, {
+                opacity: 0,
+                duration: 0.15,
+              }, "-=0.1")
+            }
           }
         })
 
-        // After flow completes, reveal step cards
+        // After flow completes, reveal step cards with stagger
         tl.to(stepCards, {
           opacity: 1,
           y: 0,
-          duration: 0.5,
-          stagger: 0.15,
+          duration: 0.6,
+          stagger: 0.2,
           ease: "power3.out",
-        }, "+=0.3")
+        }, "+=0.2")
       }
     }, sectionRef)
 
@@ -153,97 +207,103 @@ export function CoordinationSection() {
             <div ref={flowRef} className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-0">
               {/* User A */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border">
+                <div className="icon-container w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border transition-shadow">
                   <User className="w-6 h-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">User A</span>
                 <span className="text-xs text-muted-foreground">Invokes agent</span>
               </div>
 
-              {/* Connector line 1 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 1 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* Agent A */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border">
+                <div className="icon-container w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border transition-shadow">
                   <Bot className="w-6 h-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">Agent A</span>
                 <span className="text-xs text-muted-foreground">Parses intent</span>
               </div>
 
-              {/* Connector line 2 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 2 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* Coordination Engine */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-foreground flex items-center justify-center mb-3">
+                <div className="icon-container w-14 h-14 rounded-2xl bg-foreground flex items-center justify-center mb-3 transition-shadow">
                   <span className="text-background font-bold text-base">CE</span>
                 </div>
                 <span className="text-sm font-medium text-foreground">Coordination</span>
                 <span className="text-xs text-muted-foreground">Engine</span>
               </div>
 
-              {/* Connector line 3 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 3 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* Agent B */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border">
+                <div className="icon-container w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3 border border-border transition-shadow">
                   <Bot className="w-6 h-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">Agent B</span>
                 <span className="text-xs text-muted-foreground">Checks availability</span>
               </div>
 
-              {/* Connector line 4 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 4 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* User B Approves */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mb-3 border border-foreground/20">
+                <div className="icon-container w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mb-3 border border-foreground/20 transition-shadow">
                   <CheckCircle2 className="w-6 h-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">User B</span>
                 <span className="text-xs text-muted-foreground">Approves first</span>
               </div>
 
-              {/* Connector line 5 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 5 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* User A Confirms */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mb-3 border border-foreground/20">
+                <div className="icon-container w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mb-3 border border-foreground/20 transition-shadow">
                   <CheckCircle2 className="w-6 h-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">User A</span>
                 <span className="text-xs text-muted-foreground">Confirms</span>
               </div>
 
-              {/* Connector line 6 */}
-              <div className="hidden lg:flex items-center flex-1 max-w-[40px]">
-                <div className="connector-line h-[2px] w-full bg-foreground/30" />
+              {/* Connector 6 */}
+              <div className="connector-wrapper hidden lg:flex items-center flex-1 max-w-[50px] relative">
+                <div className="connector-line h-[2px] w-full bg-foreground/40" />
+                <div className="light-dot absolute w-3 h-3 rounded-full bg-foreground shadow-[0_0_10px_4px_hsl(var(--foreground)/0.6)]" style={{ top: "50%", transform: "translateY(-50%)" }} />
+                <ArrowRight className="w-4 h-4 text-foreground/50 absolute -right-2" />
               </div>
-              <ArrowRight className="hidden lg:block w-4 h-4 text-foreground/50 -ml-1" />
 
               {/* Success */}
               <div className="flow-item flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-foreground flex items-center justify-center mb-3">
+                <div className="icon-container w-14 h-14 rounded-full bg-foreground flex items-center justify-center mb-3 transition-shadow">
                   <Calendar className="w-6 h-6 text-background" />
                 </div>
                 <span className="text-sm font-medium text-foreground">Success</span>
