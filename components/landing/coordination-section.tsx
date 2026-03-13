@@ -9,41 +9,15 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
-// Session storage key to track if animation has played
-const ANIMATION_PLAYED_KEY = "coordination-animation-played"
-
 export function CoordinationSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const flowRef = useRef<HTMLDivElement>(null)
   const stepsRef = useRef<HTMLDivElement>(null)
-  const [animationComplete, setAnimationComplete] = useState(false)
+  const loopTimelineRef = useRef<gsap.core.Timeline | null>(null)
+  const [hasStarted, setHasStarted] = useState(false)
 
   useEffect(() => {
-    // Check if animation has already played this session
-    const hasPlayed = sessionStorage.getItem(ANIMATION_PLAYED_KEY) === "true"
-    
-    if (hasPlayed) {
-      // If already played, show everything immediately
-      setAnimationComplete(true)
-      const flowItems = flowRef.current?.querySelectorAll(".flow-item")
-      const connectorWrappers = flowRef.current?.querySelectorAll(".connector-wrapper")
-      const lightDots = flowRef.current?.querySelectorAll(".light-dot")
-      const stepCards = stepsRef.current?.querySelectorAll(".step-card")
-      const iconContainers = flowRef.current?.querySelectorAll(".icon-container")
-      
-      flowItems?.forEach(item => gsap.set(item, { opacity: 1, scale: 1 }))
-      iconContainers?.forEach(icon => gsap.set(icon, { boxShadow: "none" }))
-      connectorWrappers?.forEach(wrapper => {
-        const line = wrapper.querySelector(".connector-line")
-        if (line) gsap.set(line, { scaleX: 1 })
-      })
-      lightDots?.forEach(dot => gsap.set(dot, { opacity: 0 }))
-      stepCards?.forEach(card => gsap.set(card, { opacity: 1, y: 0 }))
-      gsap.set(headerRef.current, { opacity: 1, y: 0 })
-      return
-    }
-
     const ctx = gsap.context(() => {
       // Header animation
       gsap.fromTo(
@@ -62,121 +36,138 @@ export function CoordinationSection() {
         }
       )
 
-      // Sequential flow animation
       const flowItems = flowRef.current?.querySelectorAll(".flow-item")
       const connectorWrappers = flowRef.current?.querySelectorAll(".connector-wrapper")
       const stepCards = stepsRef.current?.querySelectorAll(".step-card")
       
-      if (flowItems && connectorWrappers) {
-        // Create main timeline
-        const tl = gsap.timeline({
+      if (flowItems && connectorWrappers && stepCards) {
+        // Set initial visible state for all elements
+        gsap.set(flowItems, { opacity: 0.4, scale: 1 })
+        gsap.set(stepCards, { opacity: 0, y: 30 })
+        connectorWrappers.forEach(wrapper => {
+          const line = wrapper.querySelector(".connector-line")
+          const dot = wrapper.querySelector(".light-dot")
+          if (line) gsap.set(line, { scaleX: 1, opacity: 0.4 })
+          if (dot) gsap.set(dot, { left: "0%", opacity: 0 })
+        })
+
+        // Create the looping animation function
+        const createLoopAnimation = () => {
+          const loopTl = gsap.timeline({ repeat: -1, repeatDelay: 1 })
+          
+          // Animate each flow item sequentially
+          flowItems.forEach((item, index) => {
+            const iconContainer = item.querySelector(".icon-container")
+            
+            // Zoom in current item with glow
+            loopTl.to(item, {
+              opacity: 1,
+              scale: 1.25,
+              duration: 0.4,
+              ease: "power2.out",
+            })
+            
+            // Add glow effect to icon
+            if (iconContainer) {
+              loopTl.to(iconContainer, {
+                boxShadow: "0 0 25px 8px hsl(var(--foreground) / 0.4)",
+                duration: 0.3,
+                ease: "power2.out",
+              }, "<")
+            }
+            
+            // Hold at zoomed state
+            loopTl.to({}, { duration: 0.25 })
+            
+            // Zoom out
+            loopTl.to(item, {
+              scale: 1,
+              opacity: 0.4,
+              duration: 0.3,
+              ease: "power2.inOut",
+            })
+            
+            // Remove glow
+            if (iconContainer) {
+              loopTl.to(iconContainer, {
+                boxShadow: "0 0 0px 0px hsl(var(--foreground) / 0)",
+                duration: 0.3,
+                ease: "power2.inOut",
+              }, "<")
+            }
+
+            // Animate light traveling to next item
+            if (index < flowItems.length - 1 && connectorWrappers[index]) {
+              const wrapper = connectorWrappers[index]
+              const dot = wrapper.querySelector(".light-dot")
+              
+              // Animate the light dot traveling
+              if (dot) {
+                loopTl.set(dot, { opacity: 1, left: "0%" })
+                loopTl.to(dot, {
+                  left: "100%",
+                  duration: 0.35,
+                  ease: "power1.inOut",
+                })
+                loopTl.to(dot, {
+                  opacity: 0,
+                  duration: 0.1,
+                }, "-=0.05")
+              }
+            }
+          })
+          
+          return loopTl
+        }
+
+        // Initial entrance animation then start the loop
+        const entranceTl = gsap.timeline({
           scrollTrigger: {
             trigger: flowRef.current,
             start: "top 75%",
             toggleActions: "play none none none",
+            onEnter: () => setHasStarted(true),
           },
           onComplete: () => {
-            setAnimationComplete(true)
-            sessionStorage.setItem(ANIMATION_PLAYED_KEY, "true")
+            // Start the continuous loop after entrance
+            loopTimelineRef.current = createLoopAnimation()
           }
         })
 
-        // Set initial state
-        gsap.set(flowItems, { opacity: 0.2, scale: 0.85 })
-        connectorWrappers.forEach(wrapper => {
-          const line = wrapper.querySelector(".connector-line")
-          const dot = wrapper.querySelector(".light-dot")
-          if (line) gsap.set(line, { scaleX: 0, transformOrigin: "left center" })
-          if (dot) gsap.set(dot, { left: "0%", opacity: 0 })
+        // Stagger in all elements first
+        entranceTl.to(flowItems, {
+          opacity: 0.4,
+          scale: 1,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: "power2.out",
         })
-        gsap.set(stepCards, { opacity: 0, y: 30 })
+        
+        entranceTl.to(connectorWrappers, {
+          opacity: 1,
+          duration: 0.3,
+        }, "-=0.3")
 
-        // Animate each flow item sequentially
-        flowItems.forEach((item, index) => {
-          const iconContainer = item.querySelector(".icon-container")
-          
-          // Zoom in current item with glow
-          tl.to(item, {
-            opacity: 1,
-            scale: 1.2,
-            duration: 0.5,
-            ease: "power2.out",
-          })
-          
-          // Add glow to icon
-          if (iconContainer) {
-            tl.to(iconContainer, {
-              boxShadow: "0 0 20px 5px hsl(var(--foreground) / 0.3)",
-              duration: 0.3,
-              ease: "power2.out",
-            }, "<")
-          }
-          
-          // Hold briefly
-          tl.to({}, { duration: 0.3 })
-          
-          // Scale back to normal and remove glow
-          tl.to(item, {
-            scale: 1,
-            duration: 0.3,
-            ease: "power2.inOut",
-          })
-          
-          if (iconContainer) {
-            tl.to(iconContainer, {
-              boxShadow: "0 0 0px 0px hsl(var(--foreground) / 0)",
-              duration: 0.3,
-              ease: "power2.inOut",
-            }, "<")
-          }
-
-          // Animate light traveling to next item (if not last item)
-          if (index < flowItems.length - 1 && connectorWrappers[index]) {
-            const wrapper = connectorWrappers[index]
-            const line = wrapper.querySelector(".connector-line")
-            const dot = wrapper.querySelector(".light-dot")
-            
-            // Show and animate the light dot traveling
-            if (dot) {
-              tl.set(dot, { opacity: 1, left: "0%" })
-              tl.to(dot, {
-                left: "100%",
-                duration: 0.4,
-                ease: "power1.inOut",
-              })
-            }
-            
-            // Animate the line filling in behind the dot
-            if (line) {
-              tl.to(line, {
-                scaleX: 1,
-                duration: 0.4,
-                ease: "power1.inOut",
-              }, "<")
-            }
-            
-            // Fade out the dot at the end
-            if (dot) {
-              tl.to(dot, {
-                opacity: 0,
-                duration: 0.15,
-              }, "-=0.1")
-            }
-          }
-        })
-
-        // After flow completes, reveal step cards with stagger
-        tl.to(stepCards, {
+        // Reveal step cards
+        entranceTl.to(stepCards, {
           opacity: 1,
           y: 0,
-          duration: 0.6,
-          stagger: 0.2,
+          duration: 0.5,
+          stagger: 0.15,
           ease: "power3.out",
-        }, "+=0.2")
+        }, "-=0.2")
+        
+        // Small pause before loop starts
+        entranceTl.to({}, { duration: 0.5 })
       }
     }, sectionRef)
 
-    return () => ctx.revert()
+    return () => {
+      ctx.revert()
+      if (loopTimelineRef.current) {
+        loopTimelineRef.current.kill()
+      }
+    }
   }, [])
 
   return (
@@ -314,19 +305,19 @@ export function CoordinationSection() {
             {/* Description */}
             <div ref={stepsRef} className="mt-10 pt-8 border-t border-border/60">
               <div className="grid sm:grid-cols-3 gap-6">
-                <div className="step-card p-4 rounded-xl opacity-0">
+                <div className="step-card p-4 rounded-xl">
                   <p className="text-sm font-medium text-foreground mb-1">Step 1: Intent & Availability</p>
                   <p className="text-sm text-muted-foreground">
                     Agent A parses the request and checks User A&apos;s calendar for available time slots.
                   </p>
                 </div>
-                <div className="step-card p-4 rounded-xl opacity-0">
+                <div className="step-card p-4 rounded-xl">
                   <p className="text-sm font-medium text-foreground mb-1">Step 2: Deterministic Matching</p>
                   <p className="text-sm text-muted-foreground">
                     Coordination Engine queries Agent B and performs deterministic matching to find common availability.
                   </p>
                 </div>
-                <div className="step-card p-4 rounded-xl opacity-0">
+                <div className="step-card p-4 rounded-xl">
                   <p className="text-sm font-medium text-foreground mb-1">Step 3: Human Approval</p>
                   <p className="text-sm text-muted-foreground">
                     User B approves slot proposals first, then User A confirms. Events created in both calendars.
