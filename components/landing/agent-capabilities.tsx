@@ -50,9 +50,9 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
       variants={itemVariants}
     >
       <motion.div
-        className="relative h-full p-6 rounded-xl bg-foreground/[0.02] dark:bg-foreground/[0.04] border border-foreground/[0.08] hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.08] transition-all duration-300"
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2 }}
+        className="relative h-full p-6 rounded-xl bg-foreground/[0.02] dark:bg-foreground/[0.04] border border-foreground/[0.08] hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.08] transition-all duration-300 cursor-pointer"
+        whileHover={{ scale: 1.05, y: -4 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
       >
         {/* Number badge */}
         <span className="absolute top-4 right-4 text-xs font-mono text-foreground/30 group-hover:text-foreground/50 transition-colors">
