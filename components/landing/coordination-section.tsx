@@ -18,6 +18,11 @@ export function CoordinationSection() {
   const [hasStarted, setHasStarted] = useState(false)
 
   useEffect(() => {
+    // Ensure refs are mounted before creating GSAP context
+    if (!sectionRef.current || !headerRef.current || !flowRef.current || !stepsRef.current) {
+      return
+    }
+
     const ctx = gsap.context(() => {
       // Header animation
       gsap.fromTo(
@@ -40,7 +45,7 @@ export function CoordinationSection() {
       const connectorWrappers = flowRef.current?.querySelectorAll(".connector-wrapper")
       const stepCards = stepsRef.current?.querySelectorAll(".step-card")
       
-      if (flowItems && connectorWrappers && stepCards) {
+      if (flowItems && flowItems.length > 0 && connectorWrappers && connectorWrappers.length > 0 && stepCards && stepCards.length > 0) {
         // Set initial visible state for all elements
         gsap.set(flowItems, { opacity: 0.4, scale: 1 })
         gsap.set(stepCards, { opacity: 0, y: 30 })
