@@ -50,14 +50,14 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
     >
       {/* Subtle glow effect - works in both themes */}
       <motion.div
-        className="absolute -inset-[1px] rounded-3xl bg-foreground/10 opacity-0 blur-sm"
+        className="absolute -inset-[1px] rounded-3xl bg-foreground/20 opacity-0 blur-sm"
         animate={{ opacity: isHovered ? 1 : 0 }}
         transition={{ duration: 0.3 }}
       />
       
       {/* Card content */}
       <motion.div
-        className="relative h-full p-8 rounded-3xl border border-border/50 bg-card overflow-hidden"
+        className="relative h-full p-8 rounded-3xl border border-border bg-muted/50 dark:bg-secondary overflow-hidden"
         whileHover={{ 
           y: -6,
         }}
@@ -65,7 +65,7 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
       >
         {/* Background hover effect */}
         <motion.div
-          className="absolute inset-0 bg-foreground/[0.02] dark:bg-foreground/[0.04]"
+          className="absolute inset-0 bg-foreground/[0.03] dark:bg-foreground/[0.06]"
           animate={{ opacity: isHovered ? 1 : 0 }}
           transition={{ duration: 0.3 }}
         />
@@ -87,7 +87,7 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
         <div className="relative z-10">
           {/* Icon container */}
           <motion.div 
-            className="relative w-14 h-14 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border border-border/50 bg-muted/50"
+            className="relative w-14 h-14 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border border-border bg-background dark:bg-muted"
             animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
             transition={{ duration: 0.3 }}
           >
