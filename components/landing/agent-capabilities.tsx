@@ -48,24 +48,18 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      {/* Subtle glow effect - works in both themes */}
-      <motion.div
-        className="absolute -inset-[1px] rounded-3xl bg-foreground/20 opacity-0 blur-sm"
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
-      />
-      
       {/* Card content */}
       <motion.div
-        className="relative h-full p-8 rounded-3xl border border-border bg-muted/50 dark:bg-secondary overflow-hidden"
+        className="relative h-full p-8 rounded-3xl border-2 border-foreground/10 dark:border-foreground/10 bg-foreground/[0.03] dark:bg-foreground/[0.05] overflow-hidden"
         whileHover={{ 
           y: -6,
+          borderColor: "hsl(var(--foreground) / 0.25)",
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
         {/* Background hover effect */}
         <motion.div
-          className="absolute inset-0 bg-foreground/[0.03] dark:bg-foreground/[0.06]"
+          className="absolute inset-0 bg-foreground/[0.03] dark:bg-foreground/[0.05]"
           animate={{ opacity: isHovered ? 1 : 0 }}
           transition={{ duration: 0.3 }}
         />
@@ -74,7 +68,7 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
         <motion.div
           className="absolute inset-0 opacity-0"
           style={{
-            background: "linear-gradient(105deg, transparent 40%, hsl(var(--foreground) / 0.03) 45%, hsl(var(--foreground) / 0.06) 50%, hsl(var(--foreground) / 0.03) 55%, transparent 60%)",
+            background: "linear-gradient(105deg, transparent 40%, hsl(var(--foreground) / 0.05) 45%, hsl(var(--foreground) / 0.08) 50%, hsl(var(--foreground) / 0.05) 55%, transparent 60%)",
           }}
           animate={isHovered ? {
             x: ["-100%", "200%"],
@@ -87,28 +81,11 @@ function CapabilityCard({ capability, index }: { capability: typeof capabilities
         <div className="relative z-10">
           {/* Icon container */}
           <motion.div 
-            className="relative w-14 h-14 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border border-border bg-background dark:bg-muted"
+            className="relative w-14 h-14 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border-2 border-foreground/15 bg-foreground/[0.05] dark:bg-foreground/10"
             animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Rotating border on hover */}
-            <motion.div
-              className="absolute inset-0 rounded-2xl"
-              style={{
-                background: "linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(135deg, hsl(var(--foreground)), transparent, hsl(var(--foreground))) border-box",
-                border: "1px solid transparent",
-              }}
-              animate={{ 
-                opacity: isHovered ? 1 : 0,
-                rotate: isHovered ? 360 : 0 
-              }}
-              transition={{ 
-                opacity: { duration: 0.3 },
-                rotate: { duration: 4, repeat: Infinity, ease: "linear" }
-              }}
-            />
-            
-            <capability.icon className="relative w-6 h-6 text-foreground/70 group-hover:text-foreground transition-colors duration-300" />
+            <capability.icon className="relative w-6 h-6 text-foreground/80 group-hover:text-foreground transition-colors duration-300" />
           </motion.div>
           
           {/* Title with underline animation */}
