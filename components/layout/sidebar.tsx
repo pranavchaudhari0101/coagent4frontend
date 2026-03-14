@@ -49,9 +49,9 @@ export function Sidebar() {
   const settingsItems = navItems.filter(item => item.group === "settings")
 
   return (
-    <aside className="w-60 h-screen bg-card border-r border-border/50 flex flex-col fixed left-0 top-0 z-40">
+    <aside className="w-52 h-screen bg-card border-r border-border/50 flex flex-col fixed left-0 top-0 z-40">
       {/* Logo */}
-      <div className="p-4 border-b border-border/50">
+      <div className="p-3 border-b border-border/50">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
             <span className="text-sm font-bold text-primary">⚡</span>
@@ -61,7 +61,7 @@ export function Sidebar() {
       </div>
 
       {/* User info */}
-      <div className="p-4 border-b border-border/50">
+      <div className="p-3 border-b border-border/50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
             <span className="text-sm font-semibold text-primary">AJ</span>
@@ -80,7 +80,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {/* Main items */}
         <div>
           {mainItems.map((item) => {
@@ -131,7 +131,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom section */}
-      <div className="p-3 border-t border-border/50 space-y-2">
+      <div className="p-2 border-t border-border/50 space-y-2">
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
           <Slack className="w-4 h-4 text-foreground/60" />
           <span className="text-xs text-foreground/60 truncate">Acme Corp</span>
